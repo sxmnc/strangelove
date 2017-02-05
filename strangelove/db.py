@@ -17,7 +17,7 @@ class Movie(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String(100))
-    year = Column(String(100))
+    year = Column(String(100), nullable=True)
     # Movie cam was notified.
     cam = Column(Boolean, default=False)
     # Movie screener was notified.
@@ -25,13 +25,16 @@ class Movie(Base):
     # Movie in high definition was notified.
     release = Column(Boolean, default=False)
 
-    def __init__(self, title, year):
+    def __init__(self, title, year=None):
         self.title = title
         self.year = year
         self.torrents = []
 
     def format_search(self):
-        return '{} {}'.format(self.title, self.year)
+        if self.year is not None:
+            return '{} {}'.format(self.title, self.year)
+        else:
+            return self.title
 
     def __repr__(self):
         return self.title
@@ -54,7 +57,7 @@ class Torrent(Base):
                                                   cascade='all,delete-orphan'))
 
     def __init__(self, info_hash, title, size, seeds, leechs, date, *,
-                 magnet=None, url=None):
+                 magnet=None):
         self.info_hash = info_hash
         self.title = title
         self.size = size
@@ -80,7 +83,10 @@ class Torrent(Base):
 
 def connect():
     import os
-    os.unlink('movies.db')
+    try:
+        os.unlink('movies.db')
+    except:
+        pass
     engine = create_engine('sqlite:///movies.db')
     Base.metadata.create_all(engine)
     maker = sessionmaker(bind=engine)
