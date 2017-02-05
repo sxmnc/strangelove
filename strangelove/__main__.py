@@ -4,6 +4,7 @@ import aiohttp
 from strangelove import thepiratebay
 from strangelove.classify import classify, compare
 from strangelove.db import connect, Movie
+from strangelove.irc import start_bot
 
 
 class Core:
@@ -54,15 +55,8 @@ class Core:
         self._session.close()
 
 
-async def main_task():
-    core = Core()
-    # await core.add_movie('arrival', 2016)
-    # core.rm_movie('arrival')
-    print(await core.check_movies())
-
-
 def main():
-    aio.get_event_loop().run_until_complete(main_task())
+    start_bot(aio.get_event_loop())
 
 
 if __name__ == '__main__':
