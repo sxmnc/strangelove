@@ -12,6 +12,7 @@ def crosscheck(tokens, filters):
 CATEGORIES = {
     'cam': ('cam', 'camrip', 'hdcam'),
     'dvdscr': ('dvdscr', 'screener', 'scr', 'dvdscreener', 'bdscr', 'ddc'),
+    'hc': ('hc'),
     'dvd': ('dvdrip',),
     'hd': ('bluray', 'brip', 'bdrip', 'brrip', 'bdr', 'hdrip', 'web-dl',
            'webdl', 'webrip', 'web-rip')
@@ -28,13 +29,4 @@ def classify(torrents):
                 break
     return classes
 
-
-def compare(oldts, newts):
-    old_classes = classify(oldts)
-    new_classes = classify(newts)
-
-    diff = {name: new - old for name, old, new in zip(old_classes.keys(),
-                                                      old_classes.values(),
-                                                      new_classes.values())}
-
-    return diff
+__all__ = ['classify']

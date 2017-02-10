@@ -52,12 +52,11 @@ class Torrent(Base):
     date = Column(Date)
     magnet = Column(String)
 
-    movie_id = Column(Integer, ForeignKey('movies.id'))
+    movie_id = Column(Integer, ForeignKey('movies.id'), primary_key=True)
     movie = relationship('Movie', backref=backref('torrents',
                                                   cascade='all,delete-orphan'))
 
-    def __init__(self, info_hash, title, size, seeds, leechs, date, *,
-                 magnet=None):
+    def __init__(self, info_hash, title, size, seeds, leechs, date, magnet):
         self.info_hash = info_hash
         self.title = title
         self.size = size
@@ -84,7 +83,8 @@ class Torrent(Base):
 def connect():
     import os
     try:
-        os.unlink('movies.db')
+        # os.unlink('movies.db')
+        pass
     except:
         pass
     engine = create_engine('sqlite:///movies.db')
