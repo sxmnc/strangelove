@@ -1,4 +1,5 @@
 import aiohttp
+import math
 import re
 from bs4 import BeautifulSoup
 from datetime import date
@@ -7,13 +8,6 @@ from urllib.parse import quote
 from .db import Torrent
 
 INFO_HASH_RE = re.compile(r'.*xt=urn:btih:([^&]+).*')
-
-CATEGORIES = dict(
-    all=0,
-    music=101,
-    video=200,
-    tv=205,
-)
 
 SIZE_TABLE = dict(
     b=1,
@@ -24,9 +18,17 @@ SIZE_TABLE = dict(
     pib=1 << 50,
 )
 
+NUM_RE = re.compile(r'\(approx (\d+) found\)')
+
 SIZE_RE = re.compile(r'.*Size\s+([\d\.]+)\s+([^,]+).*')
 
 DATE_RE = re.compile(r'^Uploaded\s+(\d\d)\-(\d\d)\s+(\d{4})?')
+
+
+def parse_num(doc):
+    h2 = ''.join(doc.find('h2').strings)
+    m = NUM_RE.search(h2)
+    return int(m.group(1))
 
 
 def parse_info_hash(magnet):
@@ -53,13 +55,12 @@ def parse_date(desc):
         return today
 
 
-def parse_html(html):
-    doc = BeautifulSoup(html, 'html.parser')
+def parse_torrents(doc):
     div = doc.find('table', dict(id='searchResult'))
     for tr in div.find_all('tr')[1:]:
         td = tr.find_all('td')
         links = td[1].find_all('a')
-        desc = ''.join((list(td[1].find('font').strings)))
+        desc = ''.join(list(td[1].find('font').strings))
 
         yield Torrent(
             parse_info_hash(links[1]['href']),
@@ -72,10 +73,24 @@ def parse_html(html):
         )
 
 
-async def search(query, session, category='video', domain='thepiratebay.org'):
-    url = 'http://{}/search/{}/0/7/{}'.format(domain, quote(query),
-                                              CATEGORIES[category])
-    with aiohttp.Timeout(10):
-        async with session.get(url) as res:
-            if res.status == 200:
-                return parse_html(await res.text())
+async def search(query, session, domain='thepiratebay.org'):
+    query = quote(query)
+    async def get(page):
+        url = 'http://{}/search/{}/{}/7/{}'.format(domain, query, page, 200)
+        with aiohttp.Timeout(10):
+            async with session.get(url) as res:
+                html = await res.text()
+                return BeautifulSoup(html, 'html.parser')
+    doc = await get(0)
+    page = 1
+    num = parse_num(doc)
+    pages = math.ceil(num / 30)
+    torrents = set(parse_torrents(doc))
+    while page < pages:
+        doc = await get(page)
+        torrents.update(parse_torrents(doc))
+        page += 1
+    return torrents
+
+
+__all__ = ['search']
