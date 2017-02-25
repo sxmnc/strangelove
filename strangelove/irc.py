@@ -5,7 +5,7 @@ import asyncio as aio
 import irc3
 import re
 
-from strangelove.classify import classify, KINDS
+from strangelove.classify import classify, is_valid_kind
 from strangelove.db import Movie
 from strangelove.thepiratebay import TooBeaucoupError
 
@@ -135,7 +135,7 @@ class StrangeLove:
         kind = query[:pos].lower()
         title = query[pos+1:]
 
-        if kind not in KINDS:
+        if not is_valid_kind(kind):
             self.reply('Unknown kind.')
             return
 
@@ -157,6 +157,7 @@ class StrangeLove:
 
 @cron('*/15 * * * *')
 async def checker(bot):
+    print('Checking')
     core = bot.config.core
     info = await core.check_movies()
     for movie, added, removed in info:

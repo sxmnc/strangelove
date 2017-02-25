@@ -12,23 +12,27 @@ def crosscheck(tokens, filters):
     return any(any(f == t for f in filters) for t in tokens)
 
 
-KINDS = {
-    'cam': ('cam', 'camrip', 'hdcam'),
-    'ts': ('hdts', 'hd-ts', 'hqhdts', 'ts', 'telesync', 'pdvd'),
-    'dvdscr': ('dvdscr', 'screener', 'scr', 'dvdscreener', 'bdscr', 'ddc'),
-    'hc': ('hc', 'korsub'),
-    'dvd': ('dvdrip',),
-    'hd': ('bluray', 'brip', 'bdrip', 'brrip', 'bdr', 'hdrip', 'web-dl',
-           'webdl', 'webrip', 'web-rip'),
-    'other': (),
-}
+KINDS = (
+    ('cam', ('cam', 'camrip', 'hdcam')),
+    ('ts', ('hdts', 'hd-ts', 'hqhdts', 'ts', 'telesync', 'pdvd')),
+    ('dvdscr', ('dvdscr', 'screener', 'scr', 'dvdscreener', 'bdscr', 'ddc')),
+    ('hc', ('hc', 'korsub')),
+    ('dvd', ('dvdrip',)),
+    ('hd', ('bluray', 'brip', 'bdrip', 'brrip', 'bdr', 'hdrip', 'web-dl',
+            'webdl', 'webrip', 'web-rip')),
+    ('other', ()),
+)
+
+
+def is_valid_kind(kind: str):
+    return any(kind == k for k, _ in KINDS)
 
 
 def classify(torrents: List[Torrent]):
-    kinds = {cat: set() for cat in KINDS.keys()}
+    kinds = {kind: set() for kind, _ in KINDS}
     for t in torrents:
         tk = tokens(t)
-        for kind, filters in KINDS.items():
+        for kind, filters in KINDS:
             if crosscheck(tk, filters):
                 kinds[kind].add(t)
                 break
