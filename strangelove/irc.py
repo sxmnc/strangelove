@@ -3,13 +3,14 @@ from typing import List
 
 import asyncio as aio
 import irc3
+import json
 import re
 
 from strangelove.classify import classify, is_valid_kind
 from strangelove.db import Movie
 from strangelove.thepiratebay import TooBeaucoupError
 
-_RE_CMD = re.compile(r'^!movies\s+(\S+)\s*(.*)$')
+_RE_CMD = re.compile(r'^movies\s+(\S+)\s*(.*)$')
 _RE_CMD_ADD = re.compile(r'^\s*(.+?)\s*\((\d{4})\)\s*$')
 
 
@@ -85,7 +86,10 @@ class StrangeLove:
 
     @irc3.event(irc3.rfc.PRIVMSG)
     async def on_privmsg(self, mask, event, data, target):
-        m = _RE_CMD.match(data)
+        trigger = self._core.conf['trigger']
+        if not data.startswith(trigger):
+            return
+        m = _RE_CMD.match(data[len(trigger):])
         if m is not None:
             cmd = m.group(1)
             arg = m.group(2)
@@ -166,14 +170,17 @@ async def checker(bot):
 
 
 def start_bot(core):
-    config = {
-        'core': core,
-        'loop': aio.get_event_loop(),
-        'nick': 'strangelove',
-        'channel': '#strangelove',
-        'host': 'irc.freenode.net',
-        'verbose': True,
-        'includes': ['irc3.plugins.core', 'strangelove.irc'],
-    }
-    bot = irc3.IrcBot.from_config(config)
+    with open('strangelove.json') as f:
+        conf = json.load(f)
+        core.conf = conf
+        bot_config = {
+            'core': core,
+            'loop': aio.get_event_loop(),
+            'nick': conf['nick'],
+            'channel': conf['channel'],
+            'host': conf['host'],
+            'verbose': True,
+            'includes': ['irc3.plugins.core', 'strangelove.irc'],
+        }
+    bot = irc3.IrcBot.from_config(bot_config)
     bot.run()

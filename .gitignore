@@ -94,3 +94,5 @@ share/
 
 *.db
 pip-selfcheck.json
+
+strangelove.json

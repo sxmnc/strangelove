@@ -8,7 +8,7 @@ class Core:
 
     def __init__(self, session):
         self._db = connect()
-        print(self._db)
+        self._conf = None
         self._session = session
 
     async def search(self, m):
