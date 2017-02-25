@@ -127,6 +127,9 @@ class StrangeLove:
         self.reply(fmt_list(movies))
 
     async def cmd_status(self, title: str):
+        if not title:
+            self.reply('Movie name required.')
+            return
         m = self._core.find_movie(title)
         if m is None:
             self.reply('Movie not found.')
@@ -135,9 +138,12 @@ class StrangeLove:
         self.reply(fmt_status(m))
 
     async def cmd_links(self, query: str):
-        pos = query.index(' ')
-        kind = query[:pos].lower()
-        title = query[pos+1:]
+        parts = tuple(map(str.strip, query.split('|')))
+        title = parts[0]
+        filters = parts[1].split(' ')
+
+        kind = filters[0]
+        # TODO QUALITY
 
         if not is_valid_kind(kind):
             self.reply('Unknown kind.')
@@ -150,6 +156,7 @@ class StrangeLove:
 
         kinds = classify(m.torrents)
         torrents = kinds[kind]
+
         if len(torrents) > 0:
             self.reply(' '.join(t.url for t in torrents))
         else:
