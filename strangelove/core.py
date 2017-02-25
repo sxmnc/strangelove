@@ -16,19 +16,24 @@ class Core:
         return await thepiratebay.search(m.format_search(),
                                          session=self._session)
 
-    async def add_movie(self, title, year=None):
+    async def add_movie(self, title: str, year: int=None) -> Movie:
         m = Movie(title, year)
-        torrents = await self.search(m)
-        m.torrents = list(torrents)
+        m.torrents = list(await self.search(m))
         self._db.add(m)
         self._db.commit()
-        return len(torrents), classify(torrents)
+        return m
 
-    def rm_movie(self, title):
-        m = self._db.query(Movie).filter(Movie.title.ilike(title)).first()
+    def find_movie(self, title) -> Movie:
+        return (self._db.query(Movie)
+                        .filter(Movie.title.ilike('%{}%'.format(title)))
+                        .first())
+
+    def rm_movie(self, title: str) -> Movie:
+        m = self.find_movie(title)
         if m is not None:
             self._db.delete(m)
             self._db.commit()
+            return m
         else:
             raise ValueError
 
@@ -40,8 +45,9 @@ class Core:
         cache = set(m.torrents)
         diff = torrents - cache
         if len(diff) > 0:
-            classify(diff)
-            # TODO more
+            m.torrents.extend(diff)
+            self._db.commit()
+        return m, len(diff), classify(diff)
 
     async def check_movies(self):
         movies = self._db.query(Movie).all()

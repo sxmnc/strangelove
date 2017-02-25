@@ -18,12 +18,6 @@ class Movie(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String(100))
     year = Column(String(100), nullable=True)
-    # Movie cam was notified.
-    cam = Column(Boolean, default=False)
-    # Movie screener was notified.
-    screener = Column(Boolean, default=False)
-    # Movie in high definition was notified.
-    release = Column(Boolean, default=False)
 
     def __init__(self, title, year=None):
         self.title = title

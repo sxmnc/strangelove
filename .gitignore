@@ -93,3 +93,4 @@ include/
 share/
 
 *.db
+pip-selfcheck.json

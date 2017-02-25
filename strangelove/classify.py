@@ -9,10 +9,10 @@ def crosscheck(tokens, filters):
     return any(any(f == t for f in filters) for t in tokens)
 
 
-CATEGORIES = {
+KINDS = {
     'cam': ('cam', 'camrip', 'hdcam'),
     'dvdscr': ('dvdscr', 'screener', 'scr', 'dvdscreener', 'bdscr', 'ddc'),
-    'hc': ('hc'),
+    'hc': ('hc', 'korsub'),
     'dvd': ('dvdrip',),
     'hd': ('bluray', 'brip', 'bdrip', 'brrip', 'bdr', 'hdrip', 'web-dl',
            'webdl', 'webrip', 'web-rip')
@@ -20,13 +20,13 @@ CATEGORIES = {
 
 
 def classify(torrents):
-    classes = {cat: set() for cat in CATEGORIES.keys()}
+    kinds = {cat: set() for cat in KINDS.keys()}
     for t in torrents:
         tk = tokens(t)
-        for cat, filters in CATEGORIES.items():
+        for kind, filters in KINDS.items():
             if crosscheck(tk, filters):
-                classes[cat].add(t)
+                kinds[kind].add(t)
                 break
-    return classes
+    return kinds
 
 __all__ = ['classify']

@@ -10,7 +10,8 @@ setup(
     version='0.0.1-dev',
     description="Monitor movie releases.",  # nopep8
     packages=find_packages(),
-    install_requires=['aiohttp', 'beautifulsoup4', 'irc3', 'sqlalchemy'],
+    install_requires=['aiocron', 'aiohttp', 'beautifulsoup4', 'irc3',
+                      'sqlalchemy'],
     entry_points=dict(
         console_scripts=['strangelove=strangelove.__main__:main']
     ),
