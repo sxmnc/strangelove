@@ -45,12 +45,14 @@ class Torrent(Base):
     leechs = Column(Integer)
     date = Column(Date)
     magnet = Column(String)
+    url = Column(String)
 
     movie_id = Column(Integer, ForeignKey('movies.id'), primary_key=True)
     movie = relationship('Movie', backref=backref('torrents',
                                                   cascade='all,delete-orphan'))
 
-    def __init__(self, info_hash, title, size, seeds, leechs, date, magnet):
+    def __init__(self, info_hash, title, size, seeds, leechs, date, magnet,
+                 url):
         self.info_hash = info_hash
         self.title = title
         self.size = size
@@ -58,6 +60,7 @@ class Torrent(Base):
         self.leechs = leechs
         self.date = date
         self.magnet = magnet
+        self.url = url
 
     def __eq__(self, other):
         if isinstance(other, Torrent):

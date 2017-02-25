@@ -34,9 +34,7 @@ class Core:
         if m is not None:
             self._db.delete(m)
             self._db.commit()
-            return m
-        else:
-            raise ValueError
+        return m
 
     def list_movies(self):
         return self._db.query(Movie).all()

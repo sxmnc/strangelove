@@ -5,7 +5,7 @@ import asyncio as aio
 import irc3
 import re
 
-from strangelove.classify import classify
+from strangelove.classify import classify, KINDS
 from strangelove.db import Movie
 from strangelove.thepiratebay import TooBeaucoupError
 
@@ -26,15 +26,40 @@ def fmt_new(m: Movie, new: int, kinds) -> str:
 
 
 def fmt_kinds(kinds) -> str:
-    return ', '.join(['{}:{}'.format(kind, len(torrents)) for kind, torrents
-                      in kinds.items()])
+    return ', '.join('{}:{}'.format(kind, len(torrents)) for kind, torrents
+                     in kinds.items())
 
 
 def fmt_list(movies: List[Movie]) -> str:
-    return ', '.join(['{} ({})'.format(m.title, m.year)
-                      if m.year is not None
-                      else m.title
-                      for m in movies])
+    return ', '.join('{} ({})'.format(m.title, m.year)
+                     if m.year is not None
+                     else m.title
+                     for m in movies)
+
+
+def wrap(line: str, size: int=400) -> List[str]:
+    lines = []
+    words = line.split(' ')
+    count = 0
+    curr = []
+    for word in words:
+        if len(word) > size:
+            raise ValueError('word too big')
+        elif count + len(word) + 1 > size:
+            lines.append(' '.join(curr))
+            count = len(word)
+            curr = [word]
+        else:
+            count += len(word) + 1
+            curr.append(word)
+    if len(curr) > 0:
+        lines.append(' '.join(curr))
+    return lines
+
+
+def reply(bot, fmt: str, *args, **kwargs):
+    for line in wrap(fmt.format(*args, **kwargs)):
+        bot.privmsg(bot.config.channel, line)
 
 
 @irc3.plugin
@@ -46,7 +71,8 @@ class StrangeLove:
         self._dispatch = dict(add=self.cmd_add,
                               rm=self.cmd_rm,
                               list=self.cmd_list,
-                              status=self.cmd_status)
+                              status=self.cmd_status,
+                              links=self.cmd_links)
 
     @irc3.event(irc3.rfc.CONNECTED)
     def on_connected(self, *args, **kwargs):
@@ -80,11 +106,12 @@ class StrangeLove:
                        ' using the year for example.')
 
     async def cmd_rm(self, title: str):
-        try:
-            m = self._core.rm_movie(title)
-            self.reply('{} removed.'.format(m.title))
-        except ValueError:
-            self.reply('Not found.')
+        m = self._core.rm_movie(title)
+        if m is None:
+            self.reply('Movie not found.')
+            return
+
+        self.reply('{} removed.'.format(m.title))
 
     async def cmd_list(self, _):
         movies = self._core.list_movies()
@@ -92,22 +119,42 @@ class StrangeLove:
 
     async def cmd_status(self, title: str):
         m = self._core.find_movie(title)
+        if m is None:
+            self.reply('Movie not found.')
+            return
+
         self.reply(fmt_status(m))
 
+    async def cmd_links(self, query: str):
+        pos = query.index(' ')
+        kind = query[:pos].lower()
+        title = query[pos+1:]
+
+        if kind not in KINDS:
+            self.reply('Unknown kind.')
+            return
+
+        m = self._core.find_movie(title)
+        if m is None:
+            self.reply('Movie not found.')
+            return
+
+        kinds = classify(m.torrents)
+        self.reply(' '.join(t.url for t in kinds[kind]))
+
     def reply(self, fmt: str, *args, **kwargs):
-        self._bot.privmsg(self._bot.config.channel,
-                          fmt.format(*args, **kwargs))
+        reply(self._bot, fmt, *args, **kwargs)
 
 
 @cron('*/5 * * * *')
 async def checker(bot):
-    bot.privmsg(bot.config.channel, "Checking...")
+    reply(bot, 'Checking...')
     core = bot.config.core
     info = await core.check_movies()
     for movie, new, kinds in info:
         if new > 0:
-            bot.privmsg(bot.config.channel, fmt_new(movie, new, kinds))
-    bot.privmsg(bot.config.channel, "Done.")
+            reply(bot, fmt_new(movie, new, kinds))
+    reply(bot, 'Done.')
 
 
 def start_bot(core):

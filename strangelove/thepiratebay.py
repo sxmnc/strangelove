@@ -24,6 +24,8 @@ SIZE_RE = re.compile(r'.*Size\s+([\d\.]+)\s+([^,]+).*')
 
 DATE_RE = re.compile(r'^Uploaded\s+(\d\d)\-(\d\d)\s+(\d{4})?')
 
+URL_RE = re.compile(r'/torrent/(\d+)/.+')
+
 
 def parse_num(doc):
     h2 = ''.join(doc.find('h2').strings)
@@ -55,6 +57,12 @@ def parse_date(desc):
         return today
 
 
+def parse_url(link):
+    m = URL_RE.match(link)
+    id = m.group(1)
+    return 'https://thepiratebay.org/torrent/{}'.format(id)
+
+
 def parse_torrents(doc):
     div = doc.find('table', dict(id='searchResult'))
     for tr in div.find_all('tr')[1:]:
@@ -69,7 +77,8 @@ def parse_torrents(doc):
             int(td[2].string),
             int(td[3].string),
             parse_date(desc),
-            magnet=links[1]['href'],
+            links[1]['href'],
+            parse_url(links[0]['href']),
         )
 
 
