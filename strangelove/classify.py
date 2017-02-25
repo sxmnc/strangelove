@@ -11,6 +11,7 @@ def crosscheck(tokens, filters):
 
 KINDS = {
     'cam': ('cam', 'camrip', 'hdcam'),
+    'ts': ('hdts', 'hd-ts', 'hqhdts', 'ts', 'telesync', 'pdvd'),
     'dvdscr': ('dvdscr', 'screener', 'scr', 'dvdscreener', 'bdscr', 'ddc'),
     'hc': ('hc', 'korsub'),
     'dvd': ('dvdrip',),

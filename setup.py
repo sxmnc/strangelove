@@ -7,12 +7,12 @@ if sys.version_info < (3, 5, 0):
 
 setup(
     name='strangelove',
-    version='0.0.1-dev',
-    description="Monitor movie releases.",  # nopep8
+    version='0.0.1',
+    description="Monitor movie releases.",
     packages=find_packages(),
     install_requires=['aiocron', 'aiohttp', 'beautifulsoup4', 'irc3',
                       'sqlalchemy'],
     entry_points=dict(
-        console_scripts=['strangelove=strangelove.__main__:main']
+        console_scripts=['strangelove=strangelove.main:main']
     ),
 )
