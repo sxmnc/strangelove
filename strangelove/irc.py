@@ -20,14 +20,19 @@ def fmt_status(m: Movie) -> str:
                                              fmt_kinds(kinds))
 
 
-def fmt_new(m: Movie, new: int, kinds) -> str:
-    return '{}: found {} new torrents ({})'.format(m.title, new,
-                                                   fmt_kinds(kinds))
+def fmt_check(m: Movie, added, removed) -> str:
+    parts = ['{}:'.format(m.title)]
+    if len(removed) > 0:
+        parts.append('-{} ({})'.format(len(removed),
+                                       fmt_kinds(classify(removed))))
+    if len(added) > 0:
+        parts.append('+{} ({})'.format(len(added), fmt_kinds(classify(added))))
+    return ' '.join(parts)
 
 
 def fmt_kinds(kinds) -> str:
     return ', '.join('{}:{}'.format(kind, len(torrents)) for kind, torrents
-                     in kinds.items())
+                     in kinds.items() if len(torrents) > 0)
 
 
 def fmt_list(movies: List[Movie]) -> str:
@@ -140,19 +145,23 @@ class StrangeLove:
             return
 
         kinds = classify(m.torrents)
-        self.reply(' '.join(t.url for t in kinds[kind]))
+        torrents = kinds[kind]
+        if len(torrents) > 0:
+            self.reply(' '.join(t.url for t in torrents))
+        else:
+            self.reply('No torrents found.')
 
     def reply(self, fmt: str, *args, **kwargs):
         reply(self._bot, fmt, *args, **kwargs)
 
 
-@cron('*/15 * * * *')
+@cron('* * * * *')
 async def checker(bot):
     core = bot.config.core
     info = await core.check_movies()
-    for movie, new, kinds in info:
-        if new > 0:
-            reply(bot, fmt_new(movie, new, kinds))
+    for movie, added, removed in info:
+        if len(added) > 0 or len(removed) > 0:
+            reply(bot, fmt_check(movie, added, removed))
 
 
 def start_bot(core):

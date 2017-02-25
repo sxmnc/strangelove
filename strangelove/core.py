@@ -1,7 +1,5 @@
-from typing import List, Tuple
 import asyncio as aio
 
-from strangelove.classify import classify
 from strangelove.db import connect, Movie
 from strangelove import thepiratebay
 
@@ -39,16 +37,25 @@ class Core:
     def list_movies(self):
         return self._db.query(Movie).all()
 
-    async def check_movie(self, m: Movie) -> Tuple[Movie, int, dict]:
+    async def check_movie(self, m: Movie):
         torrents = await self.search(m)
         cache = set(m.torrents)
-        diff = torrents - cache
-        if len(diff) > 0:
-            m.torrents.extend(diff)
-            self._db.commit()
-        return m, len(diff), classify(diff)
 
-    async def check_movies(self) -> List[Tuple[Movie, int, dict]]:
+        # purge removed torrents from database
+        removed = cache - torrents
+        for t in removed:
+            self._db.delete(t)
+        self._db.commit()
+
+        # add new torrents to the database
+        added = torrents - cache
+        if len(added) > 0:
+            m.torrents.extend(added)
+            self._db.commit()
+
+        return m, added, removed
+
+    async def check_movies(self):
         movies = self._db.query(Movie).all()
         if len(movies) > 0:
             coros = [self.check_movie(m) for m in movies]
