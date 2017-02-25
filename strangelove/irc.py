@@ -7,22 +7,30 @@ import re
 
 from strangelove.classify import classify
 from strangelove.db import Movie
+from strangelove.thepiratebay import TooBeaucoupError
 
 _RE_CMD = re.compile(r'^!movies\s+(\S+)\s*(.*)$')
 _RE_CMD_ADD = re.compile(r'^\s*(.+?)\s*\((\d{4})\)\s*$')
 
 
-def msg_status(m: Movie, kinds=None):
-    if kinds is None:
-        kinds = classify(m.torrents)
-    stats = ['{}:{}'.format(kind, len(torrents)) for kind, torrents
-             in kinds.items()]
-    return '{}: found {} torrents ({})'.format(m.title,
-                                               len(m.torrents),
-                                               ', '.join(stats))
+def fmt_status(m: Movie) -> str:
+    kinds = classify(m.torrents)
+    return '{}: has {} torrents ({})'.format(m.title,
+                                             len(m.torrents),
+                                             fmt_kinds(kinds))
 
 
-def msg_list(movies: List[Movie]):
+def fmt_new(m: Movie, new: int, kinds) -> str:
+    return '{}: found {} new torrents ({})'.format(m.title, new,
+                                                   fmt_kinds(kinds))
+
+
+def fmt_kinds(kinds) -> str:
+    return ', '.join(['{}:{}'.format(kind, len(torrents)) for kind, torrents
+                      in kinds.items()])
+
+
+def fmt_list(movies: List[Movie]) -> str:
     return ', '.join(['{} ({})'.format(m.title, m.year)
                       if m.year is not None
                       else m.title
@@ -64,8 +72,12 @@ class StrangeLove:
             title = m.group(1)
             year = int(m.group(2))
 
-        m = await self._core.add_movie(title, year)
-        self.reply(msg_status(m))
+        try:
+            m = await self._core.add_movie(title, year)
+            self.reply(fmt_status(m))
+        except TooBeaucoupError:
+            self.reply('The name you entered is too broad. Narrow you search' +
+                       ' using the year for example.')
 
     async def cmd_rm(self, title: str):
         try:
@@ -76,11 +88,11 @@ class StrangeLove:
 
     async def cmd_list(self, _):
         movies = self._core.list_movies()
-        self.reply(msg_list(movies))
+        self.reply(fmt_list(movies))
 
     async def cmd_status(self, title: str):
         m = self._core.find_movie(title)
-        self.reply(msg_status(m))
+        self.reply(fmt_status(m))
 
     def reply(self, fmt: str, *args, **kwargs):
         self._bot.privmsg(self._bot.config.channel,
@@ -94,7 +106,7 @@ async def checker(bot):
     info = await core.check_movies()
     for movie, new, kinds in info:
         if new > 0:
-            bot.privmsg(bot.config.channel, msg_status(movie, kinds))
+            bot.privmsg(bot.config.channel, fmt_new(movie, new, kinds))
     bot.privmsg(bot.config.channel, "Done.")
 
 

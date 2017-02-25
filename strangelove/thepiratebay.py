@@ -73,6 +73,10 @@ def parse_torrents(doc):
         )
 
 
+class TooBeaucoupError(ValueError):
+    pass
+
+
 async def search(query, session, domain='thepiratebay.org'):
     query = quote(query)
     async def get(page):
@@ -85,6 +89,8 @@ async def search(query, session, domain='thepiratebay.org'):
     page = 1
     num = parse_num(doc)
     pages = math.ceil(num / 30)
+    if pages > 10:
+        raise TooBeaucoupError
     torrents = set(parse_torrents(doc))
     while page < pages:
         doc = await get(page)

@@ -3,7 +3,7 @@ from functools import total_ordering
 
 import sqlalchemy
 from sqlalchemy import create_engine
-from sqlalchemy import (BigInteger, Boolean, Date, ForeignKey, Integer, String)
+from sqlalchemy import BigInteger, Date, ForeignKey, Integer, String
 from sqlalchemy.orm import backref, relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -75,12 +75,6 @@ class Torrent(Base):
 
 
 def connect():
-    import os
-    try:
-        # os.unlink('movies.db')
-        pass
-    except:
-        pass
     engine = create_engine('sqlite:///movies.db')
     Base.metadata.create_all(engine)
     maker = sessionmaker(bind=engine)

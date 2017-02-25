@@ -1,3 +1,4 @@
+from typing import List, Tuple
 import asyncio as aio
 
 from strangelove.classify import classify
@@ -23,7 +24,7 @@ class Core:
         self._db.commit()
         return m
 
-    def find_movie(self, title) -> Movie:
+    def find_movie(self, title: str) -> Movie:
         return (self._db.query(Movie)
                         .filter(Movie.title.ilike('%{}%'.format(title)))
                         .first())
@@ -40,7 +41,7 @@ class Core:
     def list_movies(self):
         return self._db.query(Movie).all()
 
-    async def check_movie(self, m):
+    async def check_movie(self, m: Movie) -> Tuple[Movie, int, dict]:
         torrents = await self.search(m)
         cache = set(m.torrents)
         diff = torrents - cache
@@ -49,7 +50,7 @@ class Core:
             self._db.commit()
         return m, len(diff), classify(diff)
 
-    async def check_movies(self):
+    async def check_movies(self) -> List[Tuple[Movie, int, dict]]:
         movies = self._db.query(Movie).all()
         if len(movies) > 0:
             coros = [self.check_movie(m) for m in movies]
