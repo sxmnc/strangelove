@@ -146,15 +146,13 @@ class StrangeLove:
         reply(self._bot, fmt, *args, **kwargs)
 
 
-@cron('*/5 * * * *')
+@cron('*/15 * * * *')
 async def checker(bot):
-    reply(bot, 'Checking...')
     core = bot.config.core
     info = await core.check_movies()
     for movie, new, kinds in info:
         if new > 0:
             reply(bot, fmt_new(movie, new, kinds))
-    reply(bot, 'Done.')
 
 
 def start_bot(core):

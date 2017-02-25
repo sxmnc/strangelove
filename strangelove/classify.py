@@ -29,4 +29,5 @@ def classify(torrents):
                 break
     return kinds
 
+
 __all__ = ['classify']
