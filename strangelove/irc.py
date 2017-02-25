@@ -155,7 +155,7 @@ class StrangeLove:
         reply(self._bot, fmt, *args, **kwargs)
 
 
-@cron('* * * * *')
+@cron('*/15 * * * *')
 async def checker(bot):
     core = bot.config.core
     info = await core.check_movies()
