@@ -11,3 +11,7 @@ def main():
         start_bot(core)
     finally:
         session.close()
+
+
+if __name__ == '__main__':
+    main()

@@ -13,6 +13,6 @@ setup(
     install_requires=['aiocron', 'aiohttp', 'beautifulsoup4', 'irc3',
                       'sqlalchemy'],
     entry_points=dict(
-        console_scripts=['strangelove=strangelove.main:main']
+        console_scripts=['strangelove=strangelove.__main__:main']
     ),
 )
