@@ -1,4 +1,7 @@
+from typing import List
 import re
+
+from strangelove.db import Torrent
 
 
 def tokens(t):
@@ -16,11 +19,12 @@ KINDS = {
     'hc': ('hc', 'korsub'),
     'dvd': ('dvdrip',),
     'hd': ('bluray', 'brip', 'bdrip', 'brrip', 'bdr', 'hdrip', 'web-dl',
-           'webdl', 'webrip', 'web-rip')
+           'webdl', 'webrip', 'web-rip'),
+    'other': (),
 }
 
 
-def classify(torrents):
+def classify(torrents: List[Torrent]):
     kinds = {cat: set() for cat in KINDS.keys()}
     for t in torrents:
         tk = tokens(t)
@@ -28,6 +32,8 @@ def classify(torrents):
             if crosscheck(tk, filters):
                 kinds[kind].add(t)
                 break
+        else:
+            kinds['other'].add(t)
     return kinds
 
 
